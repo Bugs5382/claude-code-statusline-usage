@@ -1,4 +1,4 @@
-# Contributing to claude-hook-usage
+# Contributing to claude-code-statusline-usage
 
 This repository follows the Bugs5382 standard workflow.
 

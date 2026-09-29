@@ -1,54 +1,49 @@
-# AGENTS.md - claude-hook-usage
+# AGENTS.md - claude-code-statusline-usage
 
-Guide for AI agents working in this repository. Pair with `CLAUDE.md` (the working agreement and
-hook-enforced rules). Keep this file current when the build, layout, or public API changes.
+Guide for agents working in this repository. Pair with `CLAUDE.md` (the working agreement and
+hook-enforced rules). Keep this file current when the script, its output files or its settings
+change.
 
 ## What this is
 
-Claude CLI status line that shows plan usage (session and weekly) and saves it for scripts to read
+A `statusLine` command for the Claude CLI (project type `claude-code`, variant `statusline`). It
+reads the status-line JSON on stdin, prints one line (model, folder, session window and weekly
+window usage), and saves the usage to `latest.json` and a throttled `history.tsv`.
 
-<!-- Fill in: what the project does, what it ships (library, service, action, CLI), and the one or
-two things an agent must understand before changing it. -->
+The one thing to understand before changing it: the prompt waits on this script, so it must never
+fail. Every field is optional, every error is swallowed, and the exit status is always 0.
 
-## Using claude-hook-usage
+## Using claude-code-statusline-usage
 
-<!-- If this project is consumed by others (a library/plugin/action), describe the contract a
-consumer must respect: the single entry point, the public surface, required options, and anything
-that must not be bypassed. Delete this section for a leaf application. -->
+The contract other scripts rely on is the output files, documented in `README.md`:
+
+- `latest.json`: `{"captured_at": <epoch>, "rate_limits": <as sent>}`, replaced atomically.
+- `history.tsv`: the header `captured_at session_pct session_resets_at week_pct week_resets_at`
+  (tab-separated), one row per interval. Adding a column is a breaking change for readers.
+- `CLAUDE_USAGE_DIR` and `CLAUDE_USAGE_LOG_EVERY` are the only settings.
+
+Never state a window's length anywhere (docs, comments, output, test names). Call them the session
+window and the weekly window; `five_hour` and `seven_day` appear only as the JSON field names.
 
 ## Layout
 
-<!-- The directories that matter and what lives in each. Keep it short; point at the entry points. -->
-
-- `src/` - <what>
-- `<tests dir>/` - <what>
+- `statusline.sh` - the script users install.
+- `install.sh` - copies it to `~/.claude`, keeps a different earlier copy as a `.bak`, and prints
+  the settings snippet. It never edits `settings.json`.
+- `tests/run.sh` - the runner and its assertion helpers.
+- `tests/<case>.test.sh` - one behaviour per file, sourced by the runner with a temporary `HOME`.
+- `tests/fixtures/` - sample stdin payloads.
 
 ## Build, test, lint
 
-<!-- The exact commands. Pull these from package.json scripts (npm), the Taskfile (Go/Task), or
-pyproject (Python) so they stay accurate. -->
-
-- Build: `<command>`
-- Test: `<command>` (note any service/fixture the integration tests require)
-- Lint: `<command>`
-- Package checks (npm packages), after a build: `npm run check:pack` (contents and ceiling),
-  `npm run check:pack:growth` (growth against the last release), `npm run check:install`
-  (install the tarball, import ESM and CJS); see CLAUDE.md "npm package contents"
-- License headers / docs: `<command>`
+- Lint: `shellcheck statusline.sh install.sh tests/*.sh`
+- Test: `bash tests/run.sh` (or `bash tests/run.sh tests/<case>.test.sh`). Needs `jq`.
+- CI runs both in one `✅ Checks` job (`.github/workflows/checks.yaml`) with a pinned shellcheck.
 
 ## Logging
 
-Follow the logging rules in `CLAUDE.md`. In short:
-
-- Log generously: entry and exit of significant operations, decisions and branches, retries, state
-  changes, external calls (target, duration, outcome), and every error with its context.
-- Levels: `trace` for step-by-step detail, `debug` for flow, `info` for lifecycle, `warn` and
-  `error` for problems. The environment filters the volume, so err on the side of too much.
-- Environments: local dev `trace` with `LOG_FORMAT=console` (never JSON), dev cluster `debug`,
-  qa/staging `info`, production `error`. Every cluster environment logs JSON. Set levels through
-  `LOG_LEVEL` and `LOG_FORMAT`, never in code; local settings live in the run target or
-  `.env.example`.
-- Never log secrets, tokens, or personal data, not even at `trace`. Log an opaque or keyed ID.
+The script has no logging on purpose: anything it writes to stdout lands in the status line, and
+it runs on every prompt update. Keep it that way; debug with the tests instead.
 
 ## Conventions and gotchas
 
@@ -56,4 +51,10 @@ Follow the logging rules in `CLAUDE.md`. In short:
   `.claude/hooks` (run `bash .claude/hooks/install.sh` once per clone).
 - Open every PR as a draft. CI skips drafts, so run the full checks locally, push once they pass,
   and mark the PR ready when the work is finished; see CLAUDE.md "CI and Actions minutes".
-- <project-specific conventions, non-obvious constraints, and traps an agent should know>
+- Stay on bash 3.2 features, since that is what macOS ships as `/bin/bash`.
+- GNU `date -r` takes a file name, not an epoch. The script detects GNU date and only gives it
+  `-d @<epoch>`; the date tests stub both flavours, so keep them passing on macOS and Linux.
+- The hook's AI-tell list blocks the CLI's two-word product name in tracked files outside
+  `CLAUDE.md` and `.claude/`, so the docs say "the Claude CLI".
+- Releases: no manifest and no `CHANGELOG.md`. The GitHub Release notes are the changelog, and the
+  owner publishes them by hand.

@@ -1,0 +1,4 @@
+{
+  "model": { "id": "claude-opus", "display_name": "Opus" },
+  "workspace": { "current_dir": "/home/dev/my-project" }
+}

@@ -1,4 +1,4 @@
-# CLAUDE.md - claude-hook-usage
+# CLAUDE.md - claude-code-statusline-usage
 
 Working agreement for this repository. It was scaffolded from `Bugs5382/project-template`;
 the governance below is shared across all repos created that way.
@@ -24,20 +24,24 @@ the governance below is shared across all repos created that way.
   (`.github/workflows/action-lint.yaml`) enforces this, so a malformed workflow fails at PR time
   instead of silently at startup on `main`.
 
-<!-- layout:begin claude-hook -->
+<!-- layout:begin claude-code/statusline -->
 ## Project layout
 
-The `claude-hook` layout: one shell hook for the Claude CLI, installed into `~/.claude`.
-The governance sync replaces this whole CLAUDE.md with the shared template on every run. Only the
-layout choice in the begin marker carries over, and this section is rendered again from it. Keep
-repo-specific notes in AGENTS.md, which the sync leaves alone.
+The `claude-code/statusline` baseline from project-template (`ecosystems/claude-code/layouts/statusline.md`).
+The governance sync replaces this whole CLAUDE.md with the shared template on
+every run. Only the layout choice in the begin marker carries over, and this
+section is rendered again from it. Anything else written here is replaced, so
+keep repo-specific notes in AGENTS.md, which the sync leaves alone.
+
+A `claude-code` project (variant `statusline`): one shell script for the Claude CLI's
+`statusLine` setting, installed into `~/.claude`.
 
 ### Tree
 
 ```text
 .
-├── <name>.sh            the hook script (here: statusline.sh)
-├── install.sh           copies the script into ~/.claude and prints the settings snippet
+├── statusline.sh        the script (for other claude-code repos, <name>.sh)
+├── install.sh           copies it into ~/.claude and prints the settings snippet
 ├── tests/
 │   ├── run.sh           plain-bash test runner, exits non-zero on any failure
 │   ├── <case>.test.sh   one file per behaviour
@@ -48,7 +52,7 @@ repo-specific notes in AGENTS.md, which the sync leaves alone.
 
 ### What goes where
 
-- The hook script is the only thing users install. It reads stdin, never the network.
+- The script is the only thing users install. It reads stdin, never the network.
 - `install.sh` never edits `settings.json`; it prints the snippet for the user to add.
 - Tests are plain bash with no extra dependency. Each test runs in a temporary `HOME` and never
   touches the real `~/.claude`.
@@ -219,8 +223,8 @@ and adds a "could not find a previous published release" warning block. Do not f
 hand. From a `Bugs5382/project-template` checkout, run:
 
 ```bash
-scaffold/prep-first-release.sh Bugs5382/claude-hook-usage --dry-run   # show the plan and the notes
-scaffold/prep-first-release.sh Bugs5382/claude-hook-usage             # rewrite the draft
+scaffold/prep-first-release.sh Bugs5382/claude-code-statusline-usage --dry-run   # show the plan and the notes
+scaffold/prep-first-release.sh Bugs5382/claude-code-statusline-usage             # rewrite the draft
 ```
 
 It finds the draft and sets the tag and title to `v1.0.0`, targeting the default branch. It
@@ -245,6 +249,6 @@ has a published release.
   auto-created `github-pages` environment allows tag refs. Once, alongside enabling Pages
   (Settings -> Pages -> Source = GitHub Actions), add a tag policy, then re-run the failed Deploy
   job (no need to re-cut the tag):
-  `gh api -X POST repos/Bugs5382/claude-hook-usage/environments/github-pages/deployment-branch-policies -f name='v*' -f type=tag`
+  `gh api -X POST repos/Bugs5382/claude-code-statusline-usage/environments/github-pages/deployment-branch-policies -f name='v*' -f type=tag`
 - Docusaurus MDX 3: avoid the `## Heading {#custom-id}` explicit-id syntax (it fails to compile);
   rely on the auto-generated slugs.
