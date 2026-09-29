@@ -10,10 +10,12 @@ around the limits** from live figures instead of guesses.
 ## ✨ Highlights
 
 - 👀 **Usage at a glance:** model, folder, session window and weekly window, each with its reset time.
+  The signed-in login can be added and the folder left out.
 - 💾 **Saved for later:** `latest.json` on every update, plus a throttled `history.tsv` log.
 - 🛟 **Never breaks the prompt:** a missing or odd field is left out, and the script always exits 0.
 - 🍎 **macOS and Linux:** works with both BSD and GNU `date`.
-- 🔒 **Local only:** reads stdin and nothing else, and never touches the network.
+- 🔒 **Local only:** reads stdin and nothing else by default, and never touches the network. The
+  optional login part also reads the CLI's own config file, and only when you turn it on.
 - 🪶 **One dependency:** `jq`. Without it the line still shows, and says `jq` is missing.
 
 ## 📦 Install
@@ -51,6 +53,13 @@ The usage parts need `rate_limits` in the payload, which **the Claude CLI only s
 Pro and Max plans, and only after the first reply**. Until then, or on other plans, you get the
 model and folder alone (`Opus · my-project`) and nothing is written to disk.
 
+With the login part on (`CLAUDE_STATUSLINE_LOGIN=1`) and the folder off
+(`CLAUDE_STATUSLINE_FOLDER=0`):
+
+```text
+Opus (user@example.com) · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)
+```
+
 Reset times are shown in your local time zone. Each window is optional. A window without a `resets_at` shows its percentage without the reset
 time. The fields read are the ones in the
 [status line docs](https://code.claude.com/docs/en/statusline.md):
@@ -58,6 +67,7 @@ time. The fields read are the ones in the
 | Shown as | Payload field |
 |---|---|
 | model | `model.display_name` |
+| login (off by default) | `oauthAccount.emailAddress` in the CLI config, not the payload (see below) |
 | folder | last part of `workspace.current_dir` (or `cwd`) |
 | session | `rate_limits.five_hour.used_percentage`, `.resets_at` |
 | week | `rate_limits.seven_day.used_percentage`, `.resets_at` |
@@ -106,9 +116,17 @@ Set these in the environment the CLI runs the command in, for example in the `co
 |---|---|---|
 | `CLAUDE_USAGE_DIR` | `~/.claude/usage` | Folder for `latest.json` and `history.tsv` |
 | `CLAUDE_USAGE_LOG_EVERY` | `300` | Minimum seconds between `history.tsv` rows; `0` logs every update |
+| `CLAUDE_STATUSLINE_LOGIN` | off | `1` shows the signed-in login after the model: `Opus (user@example.com)` |
+| `CLAUDE_STATUSLINE_FOLDER` | on | `0` leaves the folder out of the line |
 
 A value for `CLAUDE_USAGE_LOG_EVERY` that is not a whole number falls back to `300`. If the folder
 cannot be created, the line still prints and the files are skipped.
+
+The payload does not say which account is signed in, so the login part reads it from the CLI's
+config file, `$CLAUDE_CONFIG_DIR/.claude.json` when `CLAUDE_CONFIG_DIR` is set and
+`~/.claude.json` otherwise, field `oauthAccount.emailAddress`. That file is read only when
+`CLAUDE_STATUSLINE_LOGIN` is `1`. If it is missing, unreadable or not valid JSON, or has no login,
+the part is left out and the rest of the line shows as usual.
 
 ## 🧰 Requirements
 
