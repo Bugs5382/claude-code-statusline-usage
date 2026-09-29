@@ -1,7 +1,8 @@
 # shellcheck shell=bash
-# Reset times render the same with BSD date (macOS, `date -r <epoch>`) and GNU
-# date (Linux, `date -d @<epoch>`). Each stub accepts only its own flavour and
-# hands the call to the real date in whatever form the host understands.
+# Reset times, with the default format or an override, render the same with
+# BSD date (macOS, `date -r <epoch>`) and GNU date (Linux, `date -d @<epoch>`).
+# Each stub accepts only its own flavour and hands the call to the real date in
+# whatever form the host understands.
 native() { # <epoch> <format>
   if "$REAL_DATE" -d @0 +%s >/dev/null 2>&1; then
     "$REAL_DATE" -d "@$1" "$2"
@@ -34,7 +35,19 @@ for flavour in gnu bsd; do
   make_stub "$HOME/$flavour" "$flavour"
   run_hook full.json PATH="$HOME/$flavour:$PATH" CLAUDE_USAGE_DIR="$HOME/$flavour-usage"
   assert_eq 0 "$STATUS" "$flavour: exit status"
-  assert_eq "Opus · my-project · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)" "$OUT" "$flavour: status line"
+  assert_eq "Opus · my-project · session 24% (resets 2025-02-01 16:00) · week 41% (resets 2025-02-06 16:00)" "$OUT" "$flavour: status line"
+
+  run_hook full.json PATH="$HOME/$flavour:$PATH" CLAUDE_USAGE_DIR="$HOME/$flavour-usage" 'CLAUDE_USAGE_DATE_FORMAT=%a %-I:%M%p'
+  assert_eq 0 "$STATUS" "$flavour, format: exit status"
+  assert_eq "Opus · my-project · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)" "$OUT" "$flavour, format: status line"
+
+  run_hook full.json PATH="$HOME/$flavour:$PATH" CLAUDE_USAGE_DIR="$HOME/$flavour-usage" CLAUDE_USAGE_DATE_FORMAT=%Q
+  assert_eq 0 "$STATUS" "$flavour, bad format: exit status"
+  assert_eq "Opus · my-project · session 24% (resets 2025-02-01 16:00) · week 41% (resets 2025-02-06 16:00)" "$OUT" "$flavour, bad format: status line"
+
+  run_hook full.json PATH="$HOME/$flavour:$PATH" CLAUDE_USAGE_DIR="$HOME/$flavour-usage" CLAUDE_STATUSLINE_TZ=America/New_York 'CLAUDE_USAGE_DATE_FORMAT=%F %H:%M %Z'
+  assert_eq 0 "$STATUS" "$flavour, zone and format: exit status"
+  assert_eq "Opus · my-project · session 24% (resets 2025-02-01 11:00 EST) · week 41% (resets 2025-02-06 11:00 EST)" "$OUT" "$flavour, zone and format: status line"
 done
 
 # A date that understands neither form drops the reset text, not the line.

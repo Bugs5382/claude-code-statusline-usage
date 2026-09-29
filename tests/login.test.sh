@@ -1,7 +1,7 @@
 # shellcheck shell=bash
 # The signed-in login is read from the CLI config only when asked for, and any
 # problem with that file just leaves it out.
-rest=" · my-project · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)"
+rest=" · my-project · session 24% (resets 2025-02-01 16:00) · week 41% (resets 2025-02-06 16:00)"
 
 cp "$FIXTURES/config-login.json" "$HOME/.claude.json"
 run_hook full.json CLAUDE_STATUSLINE_LOGIN=1

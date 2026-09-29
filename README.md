@@ -9,8 +9,8 @@ around the limits** from live figures instead of guesses.
 
 ## ✨ Highlights
 
-- 👀 **Usage at a glance:** model, folder, session window and weekly window, each with its reset time.
-  The signed-in login can be added and the folder left out.
+- 👀 **Usage at a glance:** model, folder, session window and weekly window, each with the date and
+  time it resets. The signed-in login can be added and the folder left out.
 - 💾 **Saved for later:** `latest.json` on every update, plus a throttled `history.tsv` log.
 - 🛟 **Never breaks the prompt:** a missing or odd field is left out, and the script always exits 0.
 - 🍎 **macOS and Linux:** works with both BSD and GNU `date`.
@@ -46,7 +46,7 @@ Then add this to `~/.claude/settings.json`, merged with what is already there:
 The line shows up under the prompt on the next update:
 
 ```text
-Opus · my-project · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)
+Opus · my-project · session 24% (resets 2025-02-01 16:00) · week 41% (resets 2025-02-06 16:00)
 ```
 
 The usage parts need `rate_limits` in the payload, which **the Claude CLI only sends on Claude.ai
@@ -57,11 +57,12 @@ With the login part on (`CLAUDE_STATUSLINE_LOGIN=1`) and the folder off
 (`CLAUDE_STATUSLINE_FOLDER=0`):
 
 ```text
-Opus (user@example.com) · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)
+Opus (user@example.com) · session 24% (resets 2025-02-01 16:00) · week 41% (resets 2025-02-06 16:00)
 ```
 
-Reset times are shown in your local time zone. Each window is optional. A window without a `resets_at` shows its percentage without the reset
-time. The fields read are the ones in the
+Reset times show the date and a 24-hour time (`YYYY-MM-DD HH:MM`) in your local time zone; both the
+format and the zone can be changed (see Configuration). Each window is optional. A window without
+a `resets_at` shows its percentage without the reset time. The fields read are the ones in the
 [status line docs](https://code.claude.com/docs/en/statusline.md):
 
 | Shown as | Payload field |
@@ -119,6 +120,7 @@ Set these in the environment the CLI runs the command in, for example in the `co
 | `CLAUDE_STATUSLINE_LOGIN` | off | `1` shows the signed-in login after the model: `Opus (user@example.com)` |
 | `CLAUDE_STATUSLINE_FOLDER` | on | `0` leaves the folder out of the line |
 | `CLAUDE_STATUSLINE_TZ` | process `TZ` | IANA zone (e.g. `America/New_York`) for the reset times only |
+| `CLAUDE_USAGE_DATE_FORMAT` | `%Y-%m-%d %H:%M` | `date` format for both reset times, e.g. `%a %-I:%M%p` for `Sat 4:00PM` |
 
 A value for `CLAUDE_USAGE_LOG_EVERY` that is not a whole number falls back to `300`. If the folder
 cannot be created, the line still prints and the files are skipped.
@@ -126,6 +128,21 @@ cannot be created, the line still prints and the files are skipped.
 `CLAUDE_STATUSLINE_TZ` changes only the zone the `(resets ...)` times are shown in; nothing else in
 the line or on disk changes. Left unset, empty, or set to the same zone as `TZ`, the times render as
 before. A name that is not a real IANA zone is ignored and the process `TZ` is used instead.
+
+`CLAUDE_USAGE_DATE_FORMAT` changes only how the two reset times read. The zone still comes from
+`CLAUDE_STATUSLINE_TZ` or `TZ`, and the files on disk keep epoch seconds. For example:
+
+| Format | Shown as |
+|---|---|
+| `%Y-%m-%d %H:%M` (default) | `(resets 2025-02-01 16:00)` |
+| `%a %-I:%M%p` | `(resets Sat 4:00PM)` |
+| `%a %b %e %H:%M %Z` | `(resets Sat Feb  1 16:00 UTC)` |
+
+Only conversions that BSD and GNU `date` render the same way are accepted: `%a %A %b %B %d %e %H %I
+%j %k %l %m %M %p %S %y %Y %Z %z %u %w %F %R %T %D`, each with an optional `-` to drop padding
+(`%-I`), plus `%%` for a literal percent sign. A format that is empty, has no conversion, uses any
+other conversion, contains a control character such as a tab or newline, or is longer than 64
+characters is ignored, and the default is used instead.
 
 The payload does not say which account is signed in, so the login part reads it from the CLI's
 config file, `$CLAUDE_CONFIG_DIR/.claude.json` when `CLAUDE_CONFIG_DIR` is set and
