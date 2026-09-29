@@ -14,6 +14,7 @@
 #   CLAUDE_USAGE_LOG_EVERY  minimum seconds between history.tsv rows (300)
 #   CLAUDE_STATUSLINE_LOGIN   1 shows the signed-in login after the model (off)
 #   CLAUDE_STATUSLINE_FOLDER  0 hides the folder (on)
+#   CLAUDE_STATUSLINE_TZ      IANA zone (e.g. America/New_York) for reset times (process TZ)
 
 set -uo pipefail
 
@@ -49,13 +50,30 @@ IFS=$'\x1f' read -r model dir s_pct s_round s_reset w_pct w_round w_reset <<EOF
 $fields
 EOF
 
+# Only the reset-time date calls below take the override, and only when it
+# names a zone the system actually has (checked against zoneinfo directly,
+# since neither macOS nor Linux date rejects an unknown TZ the same way).
+tz_override=""
+tz_setting="${CLAUDE_STATUSLINE_TZ:-}"
+if [ -n "$tz_setting" ] && [ "$tz_setting" != "${TZ:-}" ]; then
+  case "$tz_setting" in
+    /* | *..*) ;;
+    *) [ -f "${TZDIR:-/usr/share/zoneinfo}/$tz_setting" ] && tz_override="$tz_setting" ;;
+  esac
+fi
+if [ -n "$tz_override" ]; then
+  tz_date() { TZ="$tz_override" date "$@"; }
+else
+  tz_date() { date "$@"; }
+fi
+
 # BSD date (macOS) takes the epoch with -r. GNU date reads -r as a file name
 # and would print that file's time if one happened to match, so GNU is detected
 # up front and only ever gets -d @epoch.
 if date --version >/dev/null 2>&1; then
-  when() { [ -n "$1" ] && date -d "@$1" '+%a %-I:%M%p' 2>/dev/null; }
+  when() { [ -n "$1" ] && tz_date -d "@$1" '+%a %-I:%M%p' 2>/dev/null; }
 else
-  when() { [ -n "$1" ] && { date -r "$1" '+%a %-I:%M%p' 2>/dev/null || date -d "@$1" '+%a %-I:%M%p' 2>/dev/null; }; }
+  when() { [ -n "$1" ] && { tz_date -r "$1" '+%a %-I:%M%p' 2>/dev/null || tz_date -d "@$1" '+%a %-I:%M%p' 2>/dev/null; }; }
 fi
 
 line="${model:-Claude}"

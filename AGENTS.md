@@ -21,7 +21,9 @@ The contract other scripts rely on is the output files, documented in `README.md
 - `history.tsv`: the header `captured_at session_pct session_resets_at week_pct week_resets_at`
   (tab-separated), one row per interval. Adding a column is a breaking change for readers.
 - The settings are `CLAUDE_USAGE_DIR`, `CLAUDE_USAGE_LOG_EVERY`, `CLAUDE_STATUSLINE_LOGIN` (`1`
-  shows the login, off by default) and `CLAUDE_STATUSLINE_FOLDER` (`0` hides the folder).
+  shows the login, off by default), `CLAUDE_STATUSLINE_FOLDER` (`0` hides the folder) and
+  `CLAUDE_STATUSLINE_TZ` (an IANA zone for the reset times only; process `TZ` when unset, empty,
+  equal to `TZ`, or not a real zone).
 - Stdin is the only input unless `CLAUDE_STATUSLINE_LOGIN=1`, which also reads
   `${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json`. Keep that read behind the toggle.
 

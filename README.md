@@ -118,9 +118,14 @@ Set these in the environment the CLI runs the command in, for example in the `co
 | `CLAUDE_USAGE_LOG_EVERY` | `300` | Minimum seconds between `history.tsv` rows; `0` logs every update |
 | `CLAUDE_STATUSLINE_LOGIN` | off | `1` shows the signed-in login after the model: `Opus (user@example.com)` |
 | `CLAUDE_STATUSLINE_FOLDER` | on | `0` leaves the folder out of the line |
+| `CLAUDE_STATUSLINE_TZ` | process `TZ` | IANA zone (e.g. `America/New_York`) for the reset times only |
 
 A value for `CLAUDE_USAGE_LOG_EVERY` that is not a whole number falls back to `300`. If the folder
 cannot be created, the line still prints and the files are skipped.
+
+`CLAUDE_STATUSLINE_TZ` changes only the zone the `(resets ...)` times are shown in; nothing else in
+the line or on disk changes. Left unset, empty, or set to the same zone as `TZ`, the times render as
+before. A name that is not a real IANA zone is ignored and the process `TZ` is used instead.
 
 The payload does not say which account is signed in, so the login part reads it from the CLI's
 config file, `$CLAUDE_CONFIG_DIR/.claude.json` when `CLAUDE_CONFIG_DIR` is set and
