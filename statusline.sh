@@ -12,6 +12,8 @@
 # Settings (environment):
 #   CLAUDE_USAGE_DIR        where latest.json and history.tsv go (~/.claude/usage)
 #   CLAUDE_USAGE_LOG_EVERY  minimum seconds between history.tsv rows (300)
+#   CLAUDE_STATUSLINE_LOGIN   1 shows the signed-in login after the model (off)
+#   CLAUDE_STATUSLINE_FOLDER  0 hides the folder (on)
 
 set -uo pipefail
 
@@ -57,7 +59,18 @@ else
 fi
 
 line="${model:-Claude}"
-[ -n "$dir" ] && [ -n "${dir##*/}" ] && line="$line · ${dir##*/}"
+# The payload carries no account, so the login comes from the CLI's own config.
+# It is opt-in because it is the one read beyond stdin.
+if [ "${CLAUDE_STATUSLINE_LOGIN:-}" = 1 ]; then
+  cfg="${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json"
+  if [ -r "$cfg" ]; then
+    login="$(jq -j '.oauthAccount.emailAddress | strings' "$cfg" 2>/dev/null)"
+    [ -n "$login" ] && line="$line ($login)"
+  fi
+fi
+if [ "${CLAUDE_STATUSLINE_FOLDER:-}" != 0 ] && [ -n "$dir" ] && [ -n "${dir##*/}" ]; then
+  line="$line · ${dir##*/}"
+fi
 if [ -n "$s_pct" ]; then
   line="$line · session ${s_round}%"
   if r="$(when "$s_reset")" && [ -n "$r" ]; then line="$line (resets $r)"; fi

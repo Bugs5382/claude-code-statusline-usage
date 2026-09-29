@@ -7,8 +7,8 @@ change.
 ## What this is
 
 A `statusLine` command for the Claude CLI (project type `claude-code`, variant `statusline`). It
-reads the status-line JSON on stdin, prints one line (model, folder, session window and weekly
-window usage), and saves the usage to `latest.json` and a throttled `history.tsv`.
+reads the status-line JSON on stdin, prints one line (model, optional login, folder, session
+window and weekly window usage), and saves the usage to `latest.json` and a throttled `history.tsv`.
 
 The one thing to understand before changing it: the prompt waits on this script, so it must never
 fail. Every field is optional, every error is swallowed, and the exit status is always 0.
@@ -20,7 +20,10 @@ The contract other scripts rely on is the output files, documented in `README.md
 - `latest.json`: `{"captured_at": <epoch>, "rate_limits": <as sent>}`, replaced atomically.
 - `history.tsv`: the header `captured_at session_pct session_resets_at week_pct week_resets_at`
   (tab-separated), one row per interval. Adding a column is a breaking change for readers.
-- `CLAUDE_USAGE_DIR` and `CLAUDE_USAGE_LOG_EVERY` are the only settings.
+- The settings are `CLAUDE_USAGE_DIR`, `CLAUDE_USAGE_LOG_EVERY`, `CLAUDE_STATUSLINE_LOGIN` (`1`
+  shows the login, off by default) and `CLAUDE_STATUSLINE_FOLDER` (`0` hides the folder).
+- Stdin is the only input unless `CLAUDE_STATUSLINE_LOGIN=1`, which also reads
+  `${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json`. Keep that read behind the toggle.
 
 Never state a window's length anywhere (docs, comments, output, test names). Call them the session
 window and the weekly window; `five_hour` and `seven_day` appear only as the JSON field names.
