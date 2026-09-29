@@ -15,6 +15,7 @@
 #   CLAUDE_STATUSLINE_LOGIN   1 shows the signed-in login after the model (off)
 #   CLAUDE_STATUSLINE_FOLDER  0 hides the folder (on)
 #   CLAUDE_STATUSLINE_TZ      IANA zone (e.g. America/New_York) for reset times (process TZ)
+#   CLAUDE_USAGE_DATE_FORMAT  date format for reset times (%Y-%m-%d %H:%M)
 
 set -uo pipefail
 
@@ -67,13 +68,39 @@ else
   tz_date() { date "$@"; }
 fi
 
+# The reset-time format. An override is used only when every conversion in it
+# is one BSD and GNU date both render the same way (an optional - flag drops
+# the padding), so a typo cannot print different text on macOS and Linux or
+# break the line. Anything else, including control characters that would split
+# the line, falls back to the default.
+date_format='%Y-%m-%d %H:%M'
+valid_date_format() {
+  local rest="$1" c seen=0
+  [ -n "$rest" ] && [ "${#rest}" -le 64 ] || return 1
+  case "$rest" in *[[:cntrl:]]*) return 1 ;; esac
+  while :; do
+    case "$rest" in *%*) rest="${rest#*%}" ;; *) break ;; esac
+    c="${rest%"${rest#?}"}"
+    if [ "$c" = % ]; then rest="${rest#?}"; continue; fi
+    if [ "$c" = - ]; then rest="${rest#?}"; c="${rest%"${rest#?}"}"; fi
+    case "$c" in
+      [aAbBdeHIjklmMpSyYZzuwFRTD]) seen=1; rest="${rest#?}" ;;
+      *) return 1 ;;
+    esac
+  done
+  [ "$seen" = 1 ]
+}
+if valid_date_format "${CLAUDE_USAGE_DATE_FORMAT:-}"; then
+  date_format="$CLAUDE_USAGE_DATE_FORMAT"
+fi
+
 # BSD date (macOS) takes the epoch with -r. GNU date reads -r as a file name
 # and would print that file's time if one happened to match, so GNU is detected
 # up front and only ever gets -d @epoch.
 if date --version >/dev/null 2>&1; then
-  when() { [ -n "$1" ] && tz_date -d "@$1" '+%a %-I:%M%p' 2>/dev/null; }
+  when() { [ -n "$1" ] && tz_date -d "@$1" "+$date_format" 2>/dev/null; }
 else
-  when() { [ -n "$1" ] && { tz_date -r "$1" '+%a %-I:%M%p' 2>/dev/null || tz_date -d "@$1" '+%a %-I:%M%p' 2>/dev/null; }; }
+  when() { [ -n "$1" ] && { tz_date -r "$1" "+$date_format" 2>/dev/null || tz_date -d "@$1" "+$date_format" 2>/dev/null; }; }
 fi
 
 line="${model:-Claude}"

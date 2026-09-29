@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # The folder part shows unless it is turned off with CLAUDE_STATUSLINE_FOLDER=0.
-usage=" · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)"
+usage=" · session 24% (resets 2025-02-01 16:00) · week 41% (resets 2025-02-06 16:00)"
 
 run_hook full.json
 assert_eq 0 "$STATUS" "default: exit status"

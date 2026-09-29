@@ -21,9 +21,14 @@ The contract other scripts rely on is the output files, documented in `README.md
 - `history.tsv`: the header `captured_at session_pct session_resets_at week_pct week_resets_at`
   (tab-separated), one row per interval. Adding a column is a breaking change for readers.
 - The settings are `CLAUDE_USAGE_DIR`, `CLAUDE_USAGE_LOG_EVERY`, `CLAUDE_STATUSLINE_LOGIN` (`1`
-  shows the login, off by default), `CLAUDE_STATUSLINE_FOLDER` (`0` hides the folder) and
+  shows the login, off by default), `CLAUDE_STATUSLINE_FOLDER` (`0` hides the folder),
   `CLAUDE_STATUSLINE_TZ` (an IANA zone for the reset times only; process `TZ` when unset, empty,
-  equal to `TZ`, or not a real zone).
+  equal to `TZ`, or not a real zone) and `CLAUDE_USAGE_DATE_FORMAT` (a `date` format for both
+  reset times, default `%Y-%m-%d %H:%M`; a format with a conversion outside the set BSD and GNU
+  `date` share, a control character, no conversion, or more than 64 characters falls back to the
+  default).
+- Reset times are display only: `latest.json` and `history.tsv` keep `resets_at` as epoch seconds
+  whatever the format or zone.
 - Stdin is the only input unless `CLAUDE_STATUSLINE_LOGIN=1`, which also reads
   `${CLAUDE_CONFIG_DIR:-$HOME}/.claude.json`. Keep that read behind the toggle.
 
@@ -59,6 +64,8 @@ it runs on every prompt update. Keep it that way; debug with the tests instead.
 - Stay on bash 3.2 features, since that is what macOS ships as `/bin/bash`.
 - GNU `date -r` takes a file name, not an epoch. The script detects GNU date and only gives it
   `-d @<epoch>`; the date tests stub both flavours, so keep them passing on macOS and Linux.
+- The reset-time format allowlist in `valid_date_format` exists so a format prints the same text
+  on both flavours. Only add a conversion to it after checking BSD and GNU `date` agree on it.
 - The hook's AI-tell list blocks the CLI's two-word product name in tracked files outside
   `CLAUDE.md` and `.claude/`, so the docs say "the Claude CLI".
 - Releases: no manifest and no `CHANGELOG.md`. The GitHub Release notes are the changelog, and the

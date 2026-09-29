@@ -2,7 +2,7 @@
 # Full payload: every usage field is shown and saved.
 run_hook full.json
 assert_eq 0 "$STATUS" "exit status"
-assert_eq "Opus · my-project · session 24% (resets Sat 4:00PM) · week 41% (resets Thu 4:00PM)" "$OUT" "status line"
+assert_eq "Opus · my-project · session 24% (resets 2025-02-01 16:00) · week 41% (resets 2025-02-06 16:00)" "$OUT" "status line"
 
 dir="$HOME/.claude/usage"
 assert_file "$dir/latest.json"
