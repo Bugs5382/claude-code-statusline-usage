@@ -11,4 +11,4 @@ disclosure timeline with you.
 
 ## Supported versions
 
-Security fixes target the latest released major version of `claude-hook-usage`.
+Security fixes target the latest released major version of `claude-code-statusline-usage`.

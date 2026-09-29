@@ -16,6 +16,6 @@ body:
     id: version
     attributes:
       label: Version
-      description: Which version of claude-hook-usage are you on?
+      description: Which version of claude-code-statusline-usage are you on?
     validations:
       required: false

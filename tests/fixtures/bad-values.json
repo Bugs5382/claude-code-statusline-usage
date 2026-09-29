@@ -1,0 +1,8 @@
+{
+  "model": { "display_name": "Opus" },
+  "workspace": { "current_dir": "/home/dev/my-project" },
+  "rate_limits": {
+    "five_hour": { "used_percentage": "lots", "resets_at": "soon" },
+    "seven_day": { "used_percentage": null }
+  }
+}
