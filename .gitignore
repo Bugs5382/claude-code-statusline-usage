@@ -1,0 +1,7 @@
+# Local-only design notes
+plan/
+
+# Editor and OS files
+.idea/
+.vscode/
+.DS_Store
